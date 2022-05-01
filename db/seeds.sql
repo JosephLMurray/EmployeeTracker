@@ -1,0 +1,50 @@
+INSERT INTO department (name)
+VALUES ("Human Resources"),
+       ("Shipping"),
+       ("Loss Prevention"),
+       ("Grocery"),
+       ("Sales");
+
+INSERT INTO role (title, salary, department_id)
+VALUES ("Manager", 125000, 1),
+       ("Manager", 80000, 2),
+       ("Manager", 74000, 3),
+       ("Manager", 70000, 4),
+       ("Manager", 71000, 5),
+       ("HR", 55000, 1),
+       ("Lawyer", 86000, 1),
+       ("Loader", 35000, 2),
+       ("Shipper", 38000, 2),
+       ("Security", 45000, 3),
+       ("Junior Security", 35000, 3),
+       ("Stocker", 28000, 4),
+       ("Produce", 32000, 4),
+       ("Frozen", 31000, 4),
+       ("Cashier", 27000, 5),
+       ("Head Cashier", 39000, 5);
+
+INSERT INTO employee (first_name, last_name, role_id, manager_id)
+VALUES  ("Man","Icorn", 1, null),
+        ("Bearded", "Lady", 2, null),
+        ("Pencil", "Vester", 3, null),
+        ("Amish", "Cyborg", 4, null),
+        ("Baby", "Wizard", 5, null),
+        ("Photography", "Raptor", 6, 1),
+        ("Balloon", "Dog", 7, 1),
+        ("Ghost", "in a Jar", 8, 2),
+        ("Tiny Cowboy", "on a Dog", 8, 2),
+        ("Uncle", "Steve", 9, 2),
+        ("Tinkles", "Your best friend", 10, 3),
+        ("Fish", "Man", 10, 3),
+        ("Sleepy", "Gary", 11, 3),
+        ("Homeless", "Puppet", 11, 3),
+        ("Frankenstein's", "Monster", 12, 4),
+        ("Big", "Duck", 12, 4),
+        ("Pool", "Kid", 13, 4),
+        ("Mrs", "Refrigerator", 13, 4),
+        ("Mr", "Poopybutthole", 14, 4),
+        ("Mr", "Beaurgard", 14, 4),
+        ("Reverse", "Giraffe", 15, 5),
+        ("Big", "Robot", 15, 5),
+        ("Cousin", "Nicky", 16, 5);
+
