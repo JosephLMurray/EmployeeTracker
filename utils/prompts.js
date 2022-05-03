@@ -58,7 +58,7 @@ const addDept = async () => {
     });
 };
 
-const getDepts = async () => {
+const getQuery = async () => {
   return new Promise((resolve, reject) => {
     db.query(`SELECT id, name FROM department`, (err, result) => {
       if (err) return reject(err);
@@ -257,7 +257,7 @@ const viewDepts = () => {
 const viewEmployees = async () => {
   const employees = new Promise((resolve, reject) => {
     db.query(
-      `SELECT e.id AS 'Employee ID', CONCAT(e.last_name, ', ', e.first_name) AS Employee, role.title AS Title, department.name AS Departments, role.salary AS Salary, IFNULL(CONCAT(m.last_name, ', ', m.first_name), "") AS Manager FROM employee e LEFT JOIN employee m ON m.id = e.manager_id LEFT JOIN role ON role.id = e.role_id LEFT JOIN department ON department.name = role.department_id`,
+      `SELECT e.id AS 'Employee ID', CONCAT(e.last_name, ', ', e.first_name) AS Employee, role.title AS Title, department.name AS Departments, role.salary AS Salary, IFNULL(CONCAT(m.last_name, ', ', m.first_name), "") AS Manager FROM employee e LEFT JOIN employee m ON m.id = e.manager_id LEFT JOIN role ON role.id = e.role_id LEFT JOIN department ON department.id = role.department_id`,
       (err, result) => {
         if (err) return reject(err);
         resolve(result);
