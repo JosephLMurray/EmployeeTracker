@@ -46,29 +46,35 @@ const addDept = async () => {
       const sql = `INSERT INTO department (name)
     VALUES (?)`;
       const params = [results.dept];
-      db.query(sql, params, (err, result) => {
-        if (err) {
-          console.log(err);
-        }
-        if (result.affectedRows >= 0) {
-          console.log(`\n${params} added to Departments\n`);
-          main();
-        }
-      });
+      const message = `\n${params} added to Departments\n`;
+      insertQuery(sql, params, message);
+      main();
     });
 };
 
-const getQuery = async () => {
+const getQuery = async (sql) => {
   return new Promise((resolve, reject) => {
-    db.query(`SELECT id, name FROM department`, (err, result) => {
+    db.query(sql, (err, result) => {
       if (err) return reject(err);
       resolve(result);
     });
   });
 };
 
+const insertQuery = (sql, params, message) => {
+  db.query(sql, params, (err, result) => {
+    if (err) {
+      console.log(err);
+    }
+    if (result.affectedRows > 0) {
+      console.log(message);
+    }
+  });
+};
+
 const addRole = async () => {
-  getDepts().then((result) => {
+  const sqlDept = `SELECT id, name FROM department`;
+  getQuery(sqlDept).then((result) => {
     const depts = result.map((result) => result.name);
     const rolePrompts = [
       {
@@ -102,45 +108,21 @@ const addRole = async () => {
         return result.name === answers.department;
       });
       //result is still available as an array of objects WITH id
-      db.query(
-        `INSERT INTO role (title, salary, department_id) VALUES (?,?,?)`,
-        [answers.role, answers.salary, deptID[0].id],
-        (err, result) => {
-          if (err) {
-            console.log(err);
-          }
-          if (result.affectedRows >= 0) {
-            console.log(`\n${answers.role} added to Departments\n`);
-            main();
-          }
-        }
-      );
+      const sql = `INSERT INTO role (title, salary, department_id) VALUES (?,?,?)`;
+      const params = [answers.role, answers.salary, deptID[0].id];
+      const message = `\n${answers.role} added to Departments\n`;
+      insertQuery(sql, params, message);
+      main();
     });
   });
 };
 
 const addEmployee = async () => {
-  const getEmployees = new Promise((resolve, reject) => {
-    db.query(
-      `SELECT CONCAT(employee.first_name, ' ', employee.last_name) AS name, employee.id, employee.last_name FROM employee`,
-      (err, result) => {
-        if (err) return reject(err);
-        resolve(result);
-      }
-    );
-  });
-  getEmployees.then((empResult) => {
+  const sqlEmp = `SELECT CONCAT(employee.first_name, ' ', employee.last_name) AS name, employee.id, employee.last_name FROM employee`;
+  const sqlManager = `SELECT role.title, role.id FROM role GROUP by role.title`;
+  getQuery(sqlEmp).then((empResult) => {
     const managers = empResult.map((empResult) => empResult.name);
-    const roles = new Promise((resolve, reject) => {
-      db.query(
-        `SELECT role.title, role.id FROM role GROUP by role.title`,
-        (err, result) => {
-          if (err) return reject(err);
-          resolve(result);
-        }
-      );
-    });
-    roles.then((roleResult) => {
+    getQuery(sqlManager).then((roleResult) => {
       const titles = roleResult.map((roleResult) => roleResult.title);
 
       const empPrompts = [
@@ -184,21 +166,16 @@ const addEmployee = async () => {
           return empResult.name === answers.manager;
         });
         //result is still available as an array of objects WITH id
-        db.query(
-          `INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?,?,?,?)`,
-          [answers.fName, answers.lName, roleID[0].id, managerID[0].id],
-          (err, result) => {
-            if (err) {
-              console.log(err);
-            }
-            if (result.affectedRows >= 0) {
-              console.log(
-                `\n${answers.fName} ${answers.lName} added to Employees\n`
-              );
-              main();
-            }
-          }
-        );
+        const sql = `INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?,?,?,?)`;
+        const params = [
+          answers.fName,
+          answers.lName,
+          roleID[0].id,
+          managerID[0].id,
+        ];
+        const message = `\n${answers.fName} ${answers.lName} added to Employees\n`;
+        insertQuery(sql, params, message);
+        main();
       });
     });
   });
@@ -226,16 +203,8 @@ const primary = async () => {
 };
 
 const viewRoles = async () => {
-  const roles = new Promise((resolve, reject) => {
-    db.query(
-      `SELECT role.title AS TITLE, role.id AS "Role ID", department.name AS Department, role.salary AS Salary FROM role LEFT JOIN department ON role.department_id = department.id`,
-      (err, result) => {
-        if (err) return reject(err);
-        resolve(result);
-      }
-    );
-  });
-  roles.then((result) => {
+  const sqlRoles = `SELECT role.title AS TITLE, role.id AS "Role ID", department.name AS Department, role.salary AS Salary FROM role LEFT JOIN department ON role.department_id = department.id`;
+  getQuery(sqlRoles).then((result) => {
     console.table(result);
     console.log(`\n`);
     main();
@@ -243,7 +212,8 @@ const viewRoles = async () => {
 };
 
 const viewDepts = () => {
-  getDepts().then((result) => {
+  const sqlDept = `SELECT id, name FROM department`;
+  getQuery(sqlDept).then((result) => {
     result = result.reduce((acc, { id, ...x }) => {
       acc[id] = x;
       return acc;
@@ -255,16 +225,8 @@ const viewDepts = () => {
 };
 
 const viewEmployees = async () => {
-  const employees = new Promise((resolve, reject) => {
-    db.query(
-      `SELECT e.id AS 'Employee ID', CONCAT(e.last_name, ', ', e.first_name) AS Employee, role.title AS Title, department.name AS Departments, role.salary AS Salary, IFNULL(CONCAT(m.last_name, ', ', m.first_name), 'none') AS Manager FROM employee e LEFT JOIN employee m ON m.id = e.manager_id LEFT JOIN role ON role.id = e.role_id LEFT JOIN department ON department.id = role.department_id`,
-      (err, result) => {
-        if (err) return reject(err);
-        resolve(result);
-      }
-    );
-  });
-  employees.then((result) => {
+  const sqlEmp = `SELECT e.id AS 'Employee ID', CONCAT(e.last_name, ', ', e.first_name) AS Employee, role.title AS Title, department.name AS Departments, role.salary AS Salary, IFNULL(CONCAT(m.last_name, ', ', m.first_name), 'none') AS Manager FROM employee e LEFT JOIN employee m ON m.id = e.manager_id LEFT JOIN role ON role.id = e.role_id LEFT JOIN department ON department.id = role.department_id`;
+  getQuery(sqlEmp).then((result) => {
     console.table(result);
     console.log(`\n`);
     main();
@@ -272,27 +234,11 @@ const viewEmployees = async () => {
 };
 
 const updateEmployee = async () => {
-  const getEmployees = new Promise((resolve, reject) => {
-    db.query(
-      `SELECT CONCAT(employee.first_name, ' ', employee.last_name) AS name, employee.id, employee.last_name FROM employee`,
-      (err, result) => {
-        if (err) return reject(err);
-        resolve(result);
-      }
-    );
-  });
-  getEmployees.then((empResult) => {
+  const sqlEmp = `SELECT CONCAT(employee.first_name, ' ', employee.last_name) AS name, employee.id, employee.last_name FROM employee`;
+  getQuery(sqlEmp).then((empResult) => {
     const empArray = empResult.map((empResult) => empResult.name);
-    const roles = new Promise((resolve, reject) => {
-      db.query(
-        `SELECT role.title, role.id FROM role GROUP by role.title`,
-        (err, result) => {
-          if (err) return reject(err);
-          resolve(result);
-        }
-      );
-    });
-    roles.then((roleResult) => {
+    const sqlRoles = `SELECT role.title, role.id FROM role GROUP by role.title`;
+    getQuery(sqlRoles).then((roleResult) => {
       const titles = roleResult.map((roleResult) => roleResult.title);
 
       const updatePrompts = [
@@ -316,18 +262,11 @@ const updateEmployee = async () => {
         const empID = empResult.filter((empResult) => {
           return empResult.name === answers.empName;
         });
-        db.query(
-          `UPDATE employee SET role_id=${roleID[0].id} WHERE id=${empID[0].id}`,
-          (err, result) => {
-            if (err) {
-              console.log(err);
-            }
-            if (result.affectedRows >= 0) {
-              console.log(`\n${answers.empName} has been updated.\n`);
-              main();
-            }
-          }
-        );
+        const sql = `UPDATE employee SET role_id=(?) WHERE id=(?)`;
+        const params = [roleID[0].id, empID[0].id];
+        const message = `\n${answers.empName} has been updated.\n`;
+        insertQuery(sql, params, message);
+        main();
       });
     });
   });
